@@ -1,0 +1,23 @@
+INSTALL LOCAL POSTGRESQL
+
+1. create local database
+terminal command
+-------
+>> CREATEDB
+>> PSQL -h localhost
+-------
+
+2. go to postgres to check the dataset and import the ddl
+--------
+>> psql postgres
+postgres=# \l    <-- here to find the database name, 长得很像user name的那个
+postgres=# \c <database name>     <-- find in the last step
+如果没问题的话，会显示： You are now connected to database "mia" as user "mia".
+然后import ddl
+postgres=# \i a2.ddl      <-- 会有一堆create tables
+postgres=# \q        <-- quit
+--------
+
+3. run sql file
+-------
+>> psql -f name.sql
