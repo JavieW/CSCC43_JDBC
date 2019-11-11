@@ -1,3 +1,10 @@
+DROP TABLE IF EXISTS country CASCADE;
+DROP TABLE IF EXISTS player CASCADE;
+DROP TABLE IF EXISTS record CASCADE;
+DROP TABLE IF EXISTS court CASCADE;
+DROP TABLE IF EXISTS tournament CASCADE;
+DROP TABLE IF EXISTS event CASCADE;
+
 CREATE TABLE country(
     cid         INTEGER     PRIMARY KEY,
     cname       VARCHAR     NOT NULL
@@ -45,8 +52,14 @@ CREATE TABLE event(
     duration   INTEGER     NOT NULL
     );
 
+insert into country values
+(1, 'China'), 
+(2, 'Canada'), 
+(3, 'US'), 
+(4, 'UK'), 
+(5, 'GG');
 
-insert into Player values
+insert into player values
 (1, 'Cole', 365, 5), 
 (2, 'Avery', 585, 5), 
 (3, 'Sam', 502, 12), 
