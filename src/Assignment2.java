@@ -49,9 +49,9 @@ public class Assignment2 {
     }
 
     public boolean insertPlayer(int pid, String pname, int globalRank, int cid) {
-        String selectQuery = "SELECT pid FROM Player WHERE pid = ?";
-        String insertQuery = "INSERT INTO Player VALUES (?, ?, ?, ?)";
         try {
+            String selectQuery = "SELECT pid FROM Player WHERE pid = ?";
+            String insertQuery = "INSERT INTO Player VALUES (?, ?, ?, ?)";
             // check the existence
             ps = connection.prepareStatement(selectQuery);
             ps.setInt(1,pid);
@@ -74,6 +74,7 @@ public class Assignment2 {
         } finally {
             try {
                 rs.close();
+                ps.close();
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -81,8 +82,8 @@ public class Assignment2 {
     }
 
     public int getChampions(int pid) {
-        String query = "SELECT count(*) AS numChams FROM Player p, Champion c WHERE p.pid = c.pid AND c.pid = ?";
         try{
+            String query = "SELECT count(*) AS numChams FROM Player p, Champion c WHERE p.pid = c.pid AND c.pid = ?";
             ps = connection.prepareStatement(query);
             ps.setInt(1,pid);
             rs = ps.executeQuery();
@@ -97,6 +98,7 @@ public class Assignment2 {
         } finally {
             try {
                 rs.close();
+                ps.close();
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -104,13 +106,16 @@ public class Assignment2 {
     }
 
     public String getCourtInfo(int courtid){
-        String query = "SELECT courtid,courtname,capacity,tname FROM Court c,tournament t WHERE c.tid = t.tid AND courtid = ?";
         try{
+            String query = "SELECT courtid,courtname,capacity,tname FROM Court c,tournament t " +
+                    "WHERE c.tid = t.tid AND courtid = ?";
             ps = connection.prepareStatement(query);
             ps.setInt(1,courtid);
             rs = ps.executeQuery();
             if (rs.next()) {
-                return rs.getInt(1) +":"+ rs.getString(2) +":"+ rs.getInt(3) +":"+ rs.getString(4);
+                // "courtid:courtname:capacity:tname"
+                return rs.getInt(1) + ":" + rs.getString(2) + ":" +
+                        rs.getInt(3) + ":" + rs.getString(4);
             } else {
                 return "";
             }
@@ -120,6 +125,7 @@ public class Assignment2 {
         } finally {
             try {
                 rs.close();
+                ps.close();
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -127,43 +133,56 @@ public class Assignment2 {
     }
 
     public boolean chgRecord(int pid, int year, int wins, int losses){
-        String query = "UPDATE Record SET wins = ?, losses = ? WHERE pid = ? AND year = ?;";
         try {
+            String query = "UPDATE Record SET wins = ?, losses = ? WHERE pid = ? AND year = ?;";
             ps = connection.prepareStatement(query);
             ps.setInt(1, wins);
             ps.setInt(2, losses);
             ps.setInt(3, pid);
             ps.setInt(4, year);
             return (ps.executeUpdate() == 1);
-        } catch (Exception e) {
+        } catch (SQLException e) {
             e.printStackTrace();
+            return false;
+        } finally {
+            try {
+                ps.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
-        return false;
     }
 
     public boolean deleteMatchBetween(int p1id, int p2id) {
-        String query = "DELETE FROM event WHERE winid = ? AND lossid = ?";
         try {
+            String query = "DELETE FROM event WHERE winid = ? AND lossid = ?";
             ps = connection.prepareStatement(query);
             ps.setInt(1, p1id);
             ps.setInt(2, p2id);
-            int firstDelte = ps.executeUpdate();
+            int firstDelete = ps.executeUpdate();
+
             ps = connection.prepareStatement(query);
             ps.setInt(1, p2id);
             ps.setInt(2, p1id);
-            int secondDelte = ps.executeUpdate();
-            return (firstDelte + secondDelte) >= 1;
+            int secondDelete = ps.executeUpdate();
+
+            return (firstDelete + secondDelete) >= 1;
         } catch (SQLException e) {
             e.printStackTrace();
+            return false;
+        } finally {
+            try {
+                ps.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
-        return false;
     }
 
     public String listPlayerRanking(){
-        String query = "SELECT pname,globalrank FROM player ORDER BY globalrank";
         try {
-            ps = connection.prepareStatement(query);
-            rs = ps.executeQuery();
+            sql = connection.createStatement();
+            rs = sql.executeQuery("SELECT pname,globalrank FROM player ORDER BY globalrank");
             String result = "";
             while (rs.next()) {
                 result += rs.getString(1) +":"+ rs.getInt(2)+"\n";
@@ -171,22 +190,73 @@ public class Assignment2 {
             return result.trim();
         } catch (SQLException e) {
             e.printStackTrace();
+            return "";
         } finally {
             try {
+                rs.close();
+                sql.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public int findTriCircle(){
+        try {
+            sql = connection.createStatement();
+            rs = sql.executeQuery("SELECT e1.winid, e2.winid, e3.winid FROM event e1, event e2, event e3 " +
+                    "WHERE e1.winid < e2.winid AND e2.winid < e3.winid AND e1.lossid = e2.winid " +
+                    "AND e2.lossid = e3.winid and e3.lossid = e1.winid");
+            int result = 0;
+            while (rs.next()) {
+                result += 1;
+            }
+            return result;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return 0;
+        } finally {
+            try {
+                rs.close();
+                sql.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public boolean updateDB(){
+        try {
+            // create championPlayers table
+            sql = connection.createStatement();
+            sql.executeUpdate("DROP TABLE IF EXISTS championPlayers CASCADE;");
+            sql.executeUpdate("CREATE TABLE championPlayers(pid INTEGER, pname VARCHAR, nchampions INTEGER);");
+
+            // select data
+            rs = sql.executeQuery("select p.pid, pname, count(*) as nchampions from player p, champion c " +
+                    "where p.pid = c.pid group by p.pid order by p.pid ASC;");
+
+            // insertion
+            ps = connection.prepareStatement("INSERT INTO championPlayers VALUES (?, ?, ?)");
+            while (rs.next()) {
+                ps.setInt(1, rs.getInt(1));
+                ps.setString(2, rs.getString(2));
+                ps.setInt(3, rs.getInt(3));
+                ps.executeUpdate();
+            }
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            try {
+                sql.close();
+                ps.close();
                 rs.close();
             } catch (SQLException e) {
                 e.printStackTrace();
             }
         }
-        return "";
-    }
-
-    public int findTriCircle(){
-        return 0;
-    }
-
-    public boolean updateDB(){
-        return false;
     }
 
     public static void main(String args[]){
@@ -211,13 +281,17 @@ public class Assignment2 {
 
 //        System.out.println("test chgRecord: ");
 //        System.out.println(a2.chgRecord(1, 2012, 2,2));
-//
+
 //        System.out.println("test deleteMatchBetween: ");
 //        System.out.println(a2.deleteMatchBetween(1, 3));
 
 //        System.out.println("test listPlayerRanking: ");
 //        System.out.println(a2.listPlayerRanking());
 
+//        System.out.println("test findTriCircle: ");
+//        System.out.println(a2.findTriCircle());
 
+        System.out.println("test updateDB: ");
+        System.out.println(a2.updateDB());
     }
 }
