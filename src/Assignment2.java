@@ -31,7 +31,7 @@ public class Assignment2 {
         try{
             connection = DriverManager.getConnection(URL, username, password);
             return true;
-        } catch (Exception e) {
+        } catch (SQLException e) {
             e.printStackTrace();
             return false;
         }
@@ -42,7 +42,7 @@ public class Assignment2 {
         try{
             connection.close();
             return true;
-        } catch (Exception e) {
+        } catch (SQLException e) {
             e.printStackTrace();
             return false;
         }
@@ -67,36 +67,117 @@ public class Assignment2 {
             ps.setString(2, pname);
             ps.setInt(3, globalRank);
             ps.setInt(4, cid);
-            if (ps.executeUpdate() == 1) {
-                return true;
-            }
-            else {
-                System.out.println("Should have exactly one row be updated");
-                return false;
-            }
-        } catch (Exception e) {
+            return (ps.executeUpdate() == 1);
+        } catch (SQLException e) {
             e.printStackTrace();
             return false;
+        } finally {
+            try {
+                rs.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
     }
 
     public int getChampions(int pid) {
-        return 0;
+        String query = "SELECT count(*) AS numChams FROM Player p, Champion c WHERE p.pid = c.pid AND c.pid = ?";
+        try{
+            ps = connection.prepareStatement(query);
+            ps.setInt(1,pid);
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            } else {
+                return 0;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return 0;
+        } finally {
+            try {
+                rs.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public String getCourtInfo(int courtid){
-        return "";
+        String query = "SELECT courtid,courtname,capacity,tname FROM Court c,tournament t WHERE c.tid = t.tid AND courtid = ?";
+        try{
+            ps = connection.prepareStatement(query);
+            ps.setInt(1,courtid);
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1) +":"+ rs.getString(2) +":"+ rs.getInt(3) +":"+ rs.getString(4);
+            } else {
+                return "";
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return "";
+        } finally {
+            try {
+                rs.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public boolean chgRecord(int pid, int year, int wins, int losses){
+        String query = "UPDATE Record SET wins = ?, losses = ? WHERE pid = ? AND year = ?;";
+        try {
+            ps = connection.prepareStatement(query);
+            ps.setInt(1, wins);
+            ps.setInt(2, losses);
+            ps.setInt(3, pid);
+            ps.setInt(4, year);
+            return (ps.executeUpdate() == 1);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return false;
     }
 
-    public boolean deleteMatcBetween(int p1id, int p2id){
+    public boolean deleteMatchBetween(int p1id, int p2id) {
+        String query = "DELETE FROM event WHERE winid = ? AND lossid = ?";
+        try {
+            ps = connection.prepareStatement(query);
+            ps.setInt(1, p1id);
+            ps.setInt(2, p2id);
+            int firstDelte = ps.executeUpdate();
+            ps = connection.prepareStatement(query);
+            ps.setInt(1, p2id);
+            ps.setInt(2, p1id);
+            int secondDelte = ps.executeUpdate();
+            return (firstDelte + secondDelte) >= 1;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         return false;
     }
 
     public String listPlayerRanking(){
+        String query = "SELECT pname,globalrank FROM player ORDER BY globalrank";
+        try {
+            ps = connection.prepareStatement(query);
+            rs = ps.executeQuery();
+            String result = "";
+            while (rs.next()) {
+                result += rs.getString(1) +":"+ rs.getInt(2)+"\n";
+            }
+            return result.trim();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                rs.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
         return "";
     }
 
@@ -110,18 +191,33 @@ public class Assignment2 {
 
     public static void main(String args[]){
         Assignment2 a2 = new Assignment2();
-        String URL = "jdbc:postgresql://localhost:5432/postgres";
-        String username = "postgres";
+        String URL = "jdbc:postgresql://localhost:5432/javiewang";
+        String username = "javiewang";
         String password = "";
-        System.out.print("test connection, expected: true, got: ");
+        System.out.println("test connection: ");
         System.out.println(a2.connectDB(URL, username, password));
 
-//        System.out.print("test disconnection, expected: true, got: ");
+//        System.out.println("test disconnection: ");
 //        System.out.println(a2.disconnectDB());
 
-        System.out.print("test insert player, expected: true, got: ");
-        a2.insertPlayer(1,"javie", 1, 1);
-        System.out.println(a2.insertPlayer(1,"javie", 1, 1));
+//        System.out.println("test insert player: ");
+//        System.out.println(a2.insertPlayer(1,"javie", 1, 1));
+
+//        System.out.println("test getChampions: ");
+//        System.out.println(a2.getChampions(2));
+
+//        System.out.println("test getCourtInfo: ");
+//        System.out.println(a2.getCourtInfo(2));
+
+//        System.out.println("test chgRecord: ");
+//        System.out.println(a2.chgRecord(1, 2012, 2,2));
+//
+//        System.out.println("test deleteMatchBetween: ");
+//        System.out.println(a2.deleteMatchBetween(1, 3));
+
+//        System.out.println("test listPlayerRanking: ");
+//        System.out.println(a2.listPlayerRanking());
+
 
     }
 }

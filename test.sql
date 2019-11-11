@@ -51,23 +51,3 @@ CREATE TABLE event(
     lossid     INTEGER     REFERENCES player(pid) ON DELETE RESTRICT,
     duration   INTEGER     NOT NULL
     );
-
-insert into country values
-(1, 'China'), 
-(2, 'Canada'), 
-(3, 'US'), 
-(4, 'UK'), 
-(5, 'GG');
-
-insert into player values
-(1, 'Cole', 365, 5), 
-(2, 'Avery', 585, 5), 
-(3, 'Sam', 502, 12), 
-(4, 'Madeleine', 511, 18), 
-(5, 'Cole', 450, 5), 
-(6, 'Michael', 1000, 12), 
-(7, 'Mackenzie', 700, 5), 
-(8, 'Mackenzie', 701, 5),
-(9, 'Micah', 498, 4), 
-(10, 'Jiaqi', 509, 4), 
-(11, 'Jamieson', 502, 6);
