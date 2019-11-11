@@ -22,11 +22,12 @@ public class Assignment2 {
             Class.forName("org.postgresql.Driver");
         }
         catch (ClassNotFoundException e) {
-            System.out.println("Failed to find the JDBC driver");
+            e.printStackTrace();
         }
     }
 
-    //Using the input parameters, establish a connection to be used for this session. Returns true if connection is sucessful
+    //Using the input parameters, establish a connection to be used for this session.
+    //Returns true if connection is sucessful
     public boolean connectDB(String URL, String username, String password){
         try{
             connection = DriverManager.getConnection(URL, username, password);
@@ -52,6 +53,7 @@ public class Assignment2 {
         try {
             String selectQuery = "SELECT pid FROM Player WHERE pid = ?";
             String insertQuery = "INSERT INTO Player VALUES (?, ?, ?, ?)";
+
             // check the existence
             ps = connection.prepareStatement(selectQuery);
             ps.setInt(1,pid);
@@ -156,11 +158,14 @@ public class Assignment2 {
     public boolean deleteMatchBetween(int p1id, int p2id) {
         try {
             String query = "DELETE FROM event WHERE winid = ? AND lossid = ?";
+
+            // delete p1 win p2
             ps = connection.prepareStatement(query);
             ps.setInt(1, p1id);
             ps.setInt(2, p2id);
             int firstDelete = ps.executeUpdate();
 
+            // delete p2 win p1
             ps = connection.prepareStatement(query);
             ps.setInt(1, p2id);
             ps.setInt(2, p1id);
@@ -259,39 +264,40 @@ public class Assignment2 {
         }
     }
 
-    public static void main(String args[]){
-        Assignment2 a2 = new Assignment2();
-        String URL = "jdbc:postgresql://localhost:5432/javiewang";
-        String username = "javiewang";
-        String password = "";
-        System.out.println("test connection: ");
-        System.out.println(a2.connectDB(URL, username, password));
-
-//        System.out.println("test disconnection: ");
-//        System.out.println(a2.disconnectDB());
-
+//    public static void main(String args[]){
+//        Assignment2 a2 = new Assignment2();
+//        String URL = "jdbc:postgresql://localhost:5432/wangj589";
+//        String username = "wangj589";
+//        String password = "<<PASSWORD>>";
+//
+//        System.out.println("test connection: ");
+//        System.out.println(a2.connectDB(URL, username, password));
+//
 //        System.out.println("test insert player: ");
 //        System.out.println(a2.insertPlayer(1,"javie", 1, 1));
-
+//
 //        System.out.println("test getChampions: ");
 //        System.out.println(a2.getChampions(2));
-
+//
 //        System.out.println("test getCourtInfo: ");
 //        System.out.println(a2.getCourtInfo(2));
-
+//
 //        System.out.println("test chgRecord: ");
 //        System.out.println(a2.chgRecord(1, 2012, 2,2));
-
+//
 //        System.out.println("test deleteMatchBetween: ");
 //        System.out.println(a2.deleteMatchBetween(1, 3));
-
+//
 //        System.out.println("test listPlayerRanking: ");
 //        System.out.println(a2.listPlayerRanking());
-
+//
 //        System.out.println("test findTriCircle: ");
 //        System.out.println(a2.findTriCircle());
-
-        System.out.println("test updateDB: ");
-        System.out.println(a2.updateDB());
-    }
+//
+//        System.out.println("test updateDB: ");
+//        System.out.println(a2.updateDB());
+//
+//        System.out.println("test disconnection: ");
+//        System.out.println(a2.disconnectDB());
+//    }
 }
