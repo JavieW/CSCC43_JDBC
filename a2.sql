@@ -144,7 +144,7 @@ INSERT INTO query7(
 
 
 --Query 8
-CREATE VIEW pair AS
+CREATE VIEW winlosspair AS
     (SELECT winid AS p1id, lossid AS p2id
     FROM event)
     UNION
@@ -153,12 +153,12 @@ CREATE VIEW pair AS
 
 INSERT INTO query8(
     SELECT p1.pname AS p1name, p2.pname AS p2name, cname
-    FROM pair, player p1, player p2, country
-    WHERE pair.p1id = p1.pid AND pair.p2id = p2.pid AND p1.cid = p2.cid AND p1.cid = country.cid
+    FROM winlosspair, player p1, player p2, country
+    WHERE winlosspair.p1id = p1.pid AND winlosspair.p2id = p2.pid AND p1.cid = p2.cid AND p1.cid = country.cid
     ORDER BY cname, p1name DESC
 );
 
-DROP VIEW pair;
+DROP VIEW winlosspair;
 
 
 --Query 9
@@ -183,36 +183,48 @@ DROP VIEW cityCampion;
 
 
 --Query 10
-CREATE VIEW win2014 AS
-    SELECT winid, count(*) AS wins
-    FROM event
-    WHERE year = 2014
-    GROUP BY winid;
+CREATE VIEW morewin AS
+    (
+        SELECT winid AS pid
+        FROM event
+        WHERE year = 2014
+    )
+    EXCEPT ALL
+    (
+        SELECT lossid AS pid
+        FROM event
+        WHERE year = 2014
+    );
 
-CREATE VIEW loss2014 AS
-    SELECT lossid, count(*) AS losses
-    FROM event
-    WHERE year = 2014
-    GROUP BY lossid;
 
-CREATE VIEW wintime AS
-    SELECT winid, SUM(duration) AS wintime, count(*) AS winnum
-    FROM event
-    GROUP BY winid;
+CREATE VIEW gametime AS
+    (
+        SELECT winid AS pid, duration
+        FROM event
+        WHERE winid <> lossid
+    )
+    UNION ALL
+    (
+        SELECT lossid AS pid, duration
+        FROM event
+    );
 
-CREATE VIEW losstime AS
-    SELECT lossid, SUM(duration) AS losstime, count(*) AS lossnum
-    FROM event
-    GROUP BY lossid;
 
 INSERT INTO query10(
-    (SELECT pname
-    FROM player, win2014, loss2014
-    WHERE winid = lossid AND winid = player.pid AND wins > losses
+    (
+        SELECT DISTINCT pname
+        FROM player, morewin
+        WHERE player.pid = morewin.pid
     )
     INTERSECT
-    (SELECT pname
-    FROM player, wintime, losstime
-    WHERE winid = lossid AND winid = player.pid AND (wintime + losstime)/(winnum + lossnum) > 200
+    (
+        SELECT pname
+        FROM player, gametime
+        WHERE gametime.pid = player.pid
+        GROUP BY player.pid, pname
+        HAVING AVG(duration) > 200
     )
 );
+
+DROP VIEW morewin;
+DROP VIEW gametime;

@@ -9,7 +9,7 @@ insert into player values
 (1, 'Cole', 365, 5), 
 (2, 'Avery', 585, 5), 
 (3, 'Sam', 502, 1), 
-(4, 'Madeleine', 511, 1), 
+(4, 'Madeleine', 450, 1), 
 (5, 'Cole', 450, 5), 
 (6, 'Michael', 1000, 3), 
 (7, 'Mackenzie', 700, 5), 
